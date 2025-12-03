@@ -1,0 +1,50 @@
+cat > /tmp/blockassist_install_fixed.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+# detect original user who invoked sudo (if any)
+RUN_AS_USER="${SUDO_USER:-$(whoami)}"
+USER_HOME="$(eval echo ~${RUN_AS_USER})"
+
+echo "[0] Running as installer for user: $RUN_AS_USER (home: $USER_HOME)"
+
+echo "[1] Updating system..."
+apt update -y && apt upgrade -y
+
+echo "[2] Install prerequisites (curl, ca-certificates, build-essential)..."
+apt install -y curl ca-certificates build-essential
+
+echo "[3] Install Node.js (LTS) via NodeSource..."
+curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+apt install -y nodejs
+
+echo "[4] Ensure npm is available and install yarn globally via npm..."
+# npm comes with nodejs package; install yarn globally
+npm install -g yarn
+
+# verify installations
+echo "[verifications] node: $(node -v || true)"
+echo "[verifications] npm:  $(npm -v || true)"
+echo "[verifications] yarn: $(yarn -v || true)"
+
+echo "[5] Cloning BlockAssist into user home..."
+# remove old clone if exists (run-as-user's home)
+rm -rf "${USER_HOME}/blockassist"
+sudo -u "$RUN_AS_USER" git clone https://github.com/gensyn-ai/blockassist.git "${USER_HOME}/blockassist"
+
+echo "[6] Installing dependencies inside modal-login as $RUN_AS_USER..."
+# run yarn install as the non-root user
+sudo -u "$RUN_AS_USER" bash -lc "cd ${USER_HOME}/blockassist/modal-login && yarn install"
+
+echo ""
+echo ">>> Installation done. To start dev server as $RUN_AS_USER, run:"
+echo "    cd ${USER_HOME}/blockassist/modal-login"
+echo "    yarn dev"
+echo ""
+echo "If you want to start dev in background, you can use:"
+echo "    nohup yarn dev >/tmp/blockassist_yarn_dev.log 2>&1 &"
+echo "or use tmux/screen or pm2 for production runtimes."
+EOF
+
+chmod +x /tmp/blockassist_install_fixed.sh
+sudo /bin/bash /tmp/blockassist_install_fixed.sh
