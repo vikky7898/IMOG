@@ -1,0 +1,35 @@
+cat > /tmp/blockassist_install_auto.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+RUN_AS_USER="${SUDO_USER:-$(whoami)}"
+USER_HOME="$(eval echo ~${RUN_AS_USER})"
+
+echo "[1] Updating system..."
+apt update -y && apt upgrade -y
+
+echo "[2] Installing prerequisites..."
+apt install -y curl ca-certificates build-essential
+
+echo "[3] Installing Node.js LTS..."
+curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+apt install -y nodejs
+
+echo "[4] Installing Yarn..."
+npm install -g yarn
+
+echo "[5] Cloning BlockAssist..."
+rm -rf "${USER_HOME}/blockassist"
+sudo -u "$RUN_AS_USER" git clone https://github.com/gensyn-ai/blockassist.git "${USER_HOME}/blockassist"
+
+echo "[6] Installing dependencies (yarn install)..."
+sudo -u "$RUN_AS_USER" bash -lc "cd ${USER_HOME}/blockassist/modal-login && yarn install"
+
+echo "[7] Starting yarn dev (FOREGROUND)..."
+
+# run yarn dev as real user in foreground
+sudo -u "$RUN_AS_USER" bash -lc "cd ${USER_HOME}/blockassist/modal-login && yarn dev"
+EOF
+
+chmod +x /tmp/blockassist_install_auto.sh
+sudo /bin/bash /tmp/blockassist_install_auto.sh
