@@ -1,4 +1,5 @@
-sudo bash -c '
+cat > /tmp/blockassist_install.sh <<'EOF'
+#!/usr/bin/env bash
 set -e
 
 echo "[1] Updating system..."
@@ -25,3 +26,8 @@ yarn dev
 
 echo "[8] Going back to blockassist..."
 cd ..
+EOF
+
+# make executable and run as root
+chmod +x /tmp/blockassist_install.sh
+sudo /bin/bash /tmp/blockassist_install.sh
