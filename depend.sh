@@ -41,6 +41,10 @@ sudo apt install -y build-essential curl git zlib1g-dev libssl-dev \
  libbz2-dev libreadline-dev libsqlite3-dev wget llvm libncursesw5-dev \
  xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev unzip
 
+# Added as requested (no other changes)
+sudo apt-get update
+sudo apt-get install -y zip unzip
+
 # Install Node.js LTS via NodeSource if node not present (helps npm/yarn)
 if ! command -v node >/dev/null 2>&1; then
   info "Installing Node.js (LTS)..."
